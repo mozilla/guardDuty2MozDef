@@ -33,6 +33,7 @@ def _get_resource_info(guardduty_event):
 def transform_event(event):
     """Take guardDuty SNS notification and turn it into a standard MozDef event."""
     guardduty_event = json.loads(event['Sns']['Message'])
+ 
     mozdef_event = {
         'timestamp': convert_my_iso_8601(event['Sns'].get('Timestamp')),
         'hostname': _get_resource_info(guardduty_event),
@@ -47,6 +48,13 @@ def transform_event(event):
         ],
         'details': guardduty_event.get('detail')
     }
+
+    # there is only one 'service', guard duty
+    # rename details.service to details.finding
+    # to make it more descriptive and match aws docs
+    # and avoid schema collisions
+    mozdef_event['details']['finding']=mozdef_event['details'].pop('service')  
+    
     return mozdef_event
 
 def handle(event, context):
